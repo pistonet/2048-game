@@ -1,0 +1,87 @@
+body {
+	background: #fbf8ef;
+}
+
+#main {
+	background: #fbf8ef;
+	width: fit-content;
+	padding: 40px;
+	margin: 15px auto;
+}
+
+#menu {
+	background: #d6cdc4;
+	margin: 0 0 20px 0;
+	padding: 10px;
+	height: 20px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+#game {
+	background: #bbada0;
+	width: 450px;
+	height: 450px;
+	position: relative;
+}
+
+.tile {
+	position: absolute;
+	width: 100px;
+	height: 100px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	animation-timing-function: ease-out;
+}
+
+.background-tile {
+	background-color: #d6cdc4;
+	position: absolute;
+	width: 100px;
+	height: 100px;
+}
+
+#main, #game, #menu, #restart, .tile, .background-tile {
+	border-radius: 7px;
+}
+
+#restart {
+	background-color: #bbada0;
+	border: none;
+	text-align: center;
+}
+
+#score, #restart, #title-text, .value {
+	font-size:  20px;
+	font-family: 'Trebuchet MS', sans-serif;
+	font-weight: bold;
+	color: #776e65;
+}
+
+.value {
+	font-size: 40px;
+}
+
+#title-text {
+	font-size: 150px;
+	margin: 0px;
+}
+
+@keyframes spawn {
+	from {opacity: 0%;}
+	to {opacity: 100%;}
+}
+
+@keyframes upgrade {
+	0% {
+	 transform: scale(1, 1);
+	}
+	50% {
+	 transform: scale(1.1, 1.1);
+	}
+	100% {
+	transform: scale(1, 1);
+	}
+}
