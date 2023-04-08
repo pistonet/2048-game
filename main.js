@@ -14,41 +14,49 @@ class Tile {
 		this.value = value;
 		this.x = x;
 		this.y = y;
+		// the coordinates this tile had on the previous turn
+		// used for creating move animations
 		this.previousX = x;
 		this.previousY = y;
 		// tile is new if it was spawned on this turn
 		this.isNew = true;
-		// tile is upgraded when another one combines into it
+		// tile is upgraded when another one combined into it on the last turn
 		this.isUpgraded = false;
-		// tile is deleted when it combines into another tile
+		// tile is deleted when it combined into anothe ron the last turn
 		this.isDeleted = false;
 	}
 
 	// moves this tile up
+	// tiles only know how to move up
+	// to move to another direction rotate all the tiles on the board,
+	// move them up and then rotate them back
 	move(otherTiles) {
 		this.isNew = false;
 		this.isUpgraded = false;
 		this.previousX = this.x;
 		this.previousY = this.y;
-		this.#move(otherTiles);
+		this._move(otherTiles);
 	}
 
-	// tiles only know how to move up
-	// to move to another direction rotate the tiles
-	#move(otherTiles) {
+
+	// move this tile up until it hits the wall or another tile
+	// do not call this method, use move() instead
+	_move(otherTiles) {
 		// only move if not on first row
 		if (this.y > 0) {
-			// tile (or tiles if they combined) in the position above this one
+			// tile (or tiles if they combined) in the position right above this one
 			const above = otherTiles.filter(t => t !== this && t.x === this.x && t.y === this.y - 1);
-			if (above.length === 2) {
-				// tiles above just combined
+			if (above.length > 1) {
+				// tiles above just combined, stay here
 				return;
 			} else if (above.length === 0) {
 				// free space above
+				// move up and then check the space above again
 				this.y -= 1;
-				this.#move(otherTiles);
+				this._move(otherTiles);
 			} else if (above[0].value === this.value) {
-				// only one tile above and it has the same value
+				// exactly one tile above and it has the same value
+				// upgrade other tile and delete this one
 				above[0].upgrade();
 				this.y -= 1;
 				this.isDeleted = true;
@@ -56,7 +64,7 @@ class Tile {
 		}
 	}
 
-	// returns true if tile actually moved
+	// returns true if tile actually moved on the previous turn
 	get moved() {
 		return this.x !== this.previousX || this.y !== this.previousY;
 	}
@@ -67,7 +75,7 @@ class Tile {
 		this.isUpgraded = true;
 	}
 
-	// rotates clockwise n times
+	// rotates the position of this tile on the board clockwise n times
 	rotate(n) {
 		if (n > 0) {
 			[this.previousX, this.previousY] = [(GRID_SIZE - 1) - this.previousY, this.previousX];
@@ -90,6 +98,7 @@ for (let y = 0; y < GRID_SIZE; y++) {
 // array containing all the tiles on the current game board
 var tiles = [];
 // game score
+// increased by the value of the created tiles when combining tiles
 var score = 0;
 
 // returns a new tile in random location that does not contain tile
@@ -162,7 +171,8 @@ const colours = {
 };
 const gray = "#3c3a32";
 
-// returns gray for the lagrer tiles (4096 ->) not found in colours
+// returns the hex color code for each tile value
+// gray for the lagrer tiles (> 2048) not found in colours
 function getColour(value) {
 	return (colours.hasOwnProperty(value)) ? colours[value] : gray;
 }
@@ -171,7 +181,8 @@ function getColour(value) {
 // function used move the tiles and play the game
 function move(direction) {
 
-	const moveAllTiles = () => {
+	// moves all of the tiles up
+	function moveAllTiles() {
 		// before moving, sort tiles in order of rising y-coordinate
 		// crucial to move tiles in correct order
 		tiles.sort((a,b) => a.y - b.y);
@@ -262,7 +273,7 @@ function draw() {
 	let i = 0;
 	tiles.forEach(t => {
 
-		// create tile
+		// create the div representing a tile
 		const div = document.createElement("div");
 		div.classList.add("tile");
 		div.style["left"] = `${toDrawnPosition(t.x)}px`;
@@ -271,8 +282,9 @@ function draw() {
 		// background based on value
 		div.style["background-color"] = getColour(t.value);
 
-		// background tiles have z-index 1
-		// deleted tiles slide under the tile they combine into
+		// background "tiles" have z-index 1
+		// deleted tiles slide under the tile they combine into,
+		// and therefore have z-index 2
 		div.style["z-index"] = (t.isDeleted) ? "2" : "3";
 
 		// animate based on tile type
@@ -287,7 +299,7 @@ function draw() {
 			+ `from {top: ${toDrawnPosition(t.previousY)}px;}` + `to {top: ${toDrawnPosition(t.y)}px;}`
 		);
 
-		// create label
+		// create the label for the tile
 		const p = document.createElement("p");
 		p.classList.add("value");
 		// values 2 and 4 have a dark font, all others have a light font
