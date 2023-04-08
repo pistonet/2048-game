@@ -270,45 +270,45 @@ function draw() {
 	// remove previous keyframes
 	clearKeyFrames();
 
-	let i = 0;
-	tiles.forEach(t => {
-
-		// create the div representing a tile
+	for (const [index, tile] of tiles.entries()) {
+		// create the div representing the tile
 		const div = document.createElement("div");
 		div.classList.add("tile");
-		div.style["left"] = `${toDrawnPosition(t.x)}px`;
-		div.style["top"] = `${toDrawnPosition(t.y)}px`;
+		div.style["left"] = `${toDrawnPosition(tile.x)}px`;
+		div.style["top"] = `${toDrawnPosition(tile.y)}px`;
 
 		// background based on value
-		div.style["background-color"] = getColour(t.value);
+		div.style["background-color"] = getColour(tile.value);
 
 		// background "tiles" have z-index 1
+		// normal tiles have z-index 3
 		// deleted tiles slide under the tile they combine into,
 		// and therefore have z-index 2
-		div.style["z-index"] = (t.isDeleted) ? "2" : "3";
+		div.style["z-index"] = (tile.isDeleted) ? "2" : "3";
 
 		// animate based on tile type
-		div.style["animation-name"] = (t.isNew) ? "spawn" : ((t.isUpgraded) ? "upgrade" : `tile_${i}`);
-		div.style["animation-duration"] = (t.isNew) ? "1s" : "0.16s";
-		// pulse the tile only after the other tile has slid under it
-		div.style["animation-delay"] = (t.isUpgraded) ? "0.10s" : "0s";
+		div.style["animation-name"] = (tile.isNew) ? "spawn" : ((tile.isUpgraded) ? "upgrade" : `tile_${index}`);
+		// new tiles slowly fade in
+		div.style["animation-duration"] = (tile.isNew) ? "1s" : "0.16s";
+		// pulse the upgraded tile only after the other tile has slid under it
+		div.style["animation-delay"] = (tile.isUpgraded) ? "0.10s" : "0s";
 
-		// create custom animation for tile sliding
-		addKeyFrames(`tile_${i}`,
-			`from {left: ${toDrawnPosition(t.previousX)}px;}` + `to {left: ${toDrawnPosition(t.x)}px;}`
-			+ `from {top: ${toDrawnPosition(t.previousY)}px;}` + `to {top: ${toDrawnPosition(t.y)}px;}`
+		// create custom animation for tile sliding based on the tiles current and previous position
+		addKeyFrames(`tile_${index}`,
+			`from {left: ${toDrawnPosition(tile.previousX)}px;}` + `to {left: ${toDrawnPosition(tile.x)}px;}`
+			+ `from {top: ${toDrawnPosition(tile.previousY)}px;}` + `to {top: ${toDrawnPosition(tile.y)}px;}`
 		);
 
 		// create the label for the tile
 		const p = document.createElement("p");
 		p.classList.add("value");
 		// values 2 and 4 have a dark font, all others have a light font
-		p.style["color"] = (t.value <= 4) ? "#776e65" : "#f9f6f2";
-		p.innerText = t.value;
+		p.style["color"] = (tile.value <= 4) ? "#776e65" : "#f9f6f2";
+		p.innerText = tile.value;
 		div.appendChild(p);
 		game.appendChild(div);
-		i++;
-	});
+	}
+
 }
 
 
