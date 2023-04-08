@@ -22,7 +22,7 @@ class Tile {
 		this.isNew = true;
 		// tile is upgraded when another one combined into it on the last turn
 		this.isUpgraded = false;
-		// tile is deleted when it combined into anothe ron the last turn
+		// tile is deleted when it combined into another one the last turn
 		this.isDeleted = false;
 	}
 
@@ -40,27 +40,27 @@ class Tile {
 
 
 	// move this tile up until it hits the wall or another tile
-	// do not call this method, use move() instead
+	// do not call this method from outside this class, use move() instead
 	_move(otherTiles) {
 		// only move if not on first row
-		if (this.y > 0) {
-			// tile (or tiles if they combined) in the position right above this one
-			const above = otherTiles.filter(t => t !== this && t.x === this.x && t.y === this.y - 1);
-			if (above.length > 1) {
-				// tiles above just combined, stay here
-				return;
-			} else if (above.length === 0) {
-				// free space above
-				// move up and then check the space above again
-				this.y -= 1;
-				this._move(otherTiles);
-			} else if (above[0].value === this.value) {
-				// exactly one tile above and it has the same value
-				// upgrade other tile and delete this one
-				above[0].upgrade();
-				this.y -= 1;
-				this.isDeleted = true;
-			}
+		if (this.y === 0) {
+			return;
+		}
+		// tile (or tiles if they combined) in the position right above this one
+		const above = otherTiles.filter(t => t !== this && t.x === this.x && t.y === this.y - 1);
+		if (above.length > 1) {
+			// tiles above just combined, stay here
+			return;
+		} else if (above.length === 0) {
+			// free space above, move up and then check the space above again
+			this.y -= 1;
+			this._move(otherTiles);
+		} else if (above[0].value === this.value) {
+			// exactly one tile above and it has the same value
+			// upgrade other tile and delete this one
+			above[0].upgrade();
+			this.y -= 1;
+			this.isDeleted = true;
 		}
 	}
 
@@ -97,25 +97,27 @@ for (let y = 0; y < GRID_SIZE; y++) {
 
 // array containing all the tiles on the current game board
 var tiles = [];
-// game score
-// increased by the value of the created tiles when combining tiles
+// game score,
+// increased by the value of the created tile when combining tiles
 var score = 0;
 
-// returns a new tile in random location that does not contain tile
+// returns a new tile in a random location that does not contain tile,
 // if there are no free locations returns undefined
 function createRandomTile(previousTiles) {
 	let freeLocations = allLocations.filter(l => !previousTiles.some(t => t.x === l[0] && t.y === l[1]));
 	if (freeLocations.length === 0) {
 		return;
 	} else {
+		// pick a random location and value for the new tile
 		const location = freeLocations[Math.floor(Math.random()*freeLocations.length)];
+		// new tiles usually have a value of 2, but 10% of the time a tile with value 4 is created
 		const value = Math.random() < 0.9 ? 2 : 4;
 		return new Tile(value, location[0], location[1]);
 	}
 }
 
 
-// resets score, clear the tiles array and adds 2 new random tiles
+// resets score, clears the tiles array and adds 2 new random tiles
 function initialize() {
 	tiles = [];
 	score = 0;
@@ -127,6 +129,7 @@ function initialize() {
 }
 
 // draw the background tiles (the "empty squares") into the game board
+// called only once when the document loads
 function drawBackgroundTiles() {
 
 	const game = document.getElementById("game");
@@ -220,7 +223,7 @@ function move(direction) {
 		tiles.push(createRandomTile(tiles));
 	}
 
-	// increase score after moving
+	// after moving, increase score by the sum of the values of the newly created tiles
 	score += tiles.filter(t => t.isUpgraded).map(t => t.value).reduce((sum, n) => sum + n, 0);
 }
 
@@ -249,10 +252,12 @@ document.addEventListener('keydown', ev => {
 const stylesheet = document.createElement('style');
 document.head.appendChild(stylesheet);
 
+// adds a single keyframes animation to the animation stylesheet
 function addKeyFrames(name, frames) {
     stylesheet.sheet.insertRule("@keyframes " + name + "{" + frames + "}");
 }
 
+// clears all keyframes animations from the animation stylesheet
 function clearKeyFrames() {
     Array.from(stylesheet.sheet.rules).forEach(r => stylesheet.sheet.deleteRule(r));
 }
@@ -288,13 +293,14 @@ function draw() {
 
 		// animate based on tile type
 		div.style["animation-name"] = (tile.isNew) ? "spawn" : ((tile.isUpgraded) ? "upgrade" : `tile_${index}`);
-		// new tiles slowly fade in
+		// new tiles slowly fade in, upgraded and sliding tiles have faster animation
 		div.style["animation-duration"] = (tile.isNew) ? "1s" : "0.16s";
 		// pulse the upgraded tile only after the other tile has slid under it
 		div.style["animation-delay"] = (tile.isUpgraded) ? "0.10s" : "0s";
 
-		// create custom animation for tile sliding based on the tiles current and previous position
-		addKeyFrames(`tile_${index}`,
+		// create custom animation for tile sliding based on the tile's current and previous position
+		addKeyFrames(
+			`tile_${index}`,
 			`from {left: ${toDrawnPosition(tile.previousX)}px;}` + `to {left: ${toDrawnPosition(tile.x)}px;}`
 			+ `from {top: ${toDrawnPosition(tile.previousY)}px;}` + `to {top: ${toDrawnPosition(tile.y)}px;}`
 		);
